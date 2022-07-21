@@ -4,7 +4,7 @@ services:
   web:
     build: .
     volumes:
-      - ./innotter/:/home/maks/myfolder/python/Innotter/innotter
+      - .:/app
     ports:
       - 8000:8000
     env_file:
@@ -12,7 +12,7 @@ services:
   db:
     image: postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - ./data/db:/var/lib/postgresql/data/
     env_file:
       - ./.env
 volumes:

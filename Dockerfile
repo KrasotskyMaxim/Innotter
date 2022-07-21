@@ -2,7 +2,7 @@
 FROM python:3.10.4-alpine
 
 # set work directory
-WORKDIR /home/maks/myfolder/python/Innotter
+WORKDIR /app
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -16,7 +16,7 @@ RUN pip install -r requirements.txt
 
 
 # copy project
-COPY . .
+COPY . /app/
 
 # run entrypoint.sh
-ENTRYPOINT ["/home/maks/myfolder/python/Innotter/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
