@@ -1,15 +1,34 @@
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import mixins
 
-from .models import *
-from .serializers import *
+from users.models import User
+from users.serializers import UserListSerializer, UserDetailSerializer, UserRegistrationSerializer, UserLoginSerializer
+from rest_framework.permissions import IsAuthenticated
 
 
-class UserViewSet(mixins.CreateModelMixin,
-                  mixins.RetrieveModelMixin,
+class UserViewSet(mixins.RetrieveModelMixin,
                   mixins.UpdateModelMixin,
-                  mixins.DestroyModelMixin,
                   mixins.ListModelMixin,
                   GenericViewSet):
-    serializer_class = UserSerializer
     queryset = User.objects.all()
+    # permission_classes = (IsAuthenticated, )
+    
+    def get_serializer_class(self):
+        if self.action in ["retrieve", "update"]:
+            return UserDetailSerializer
+        
+        return UserListSerializer
+    
+
+class UserRegistrationViewSet(mixins.CreateModelMixin,
+                              GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserRegistrationSerializer
+    
+    
+
+class UserLoginViewSet(mixins.CreateModelMixin,
+                       GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserLoginSerializer
+    
