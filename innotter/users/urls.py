@@ -1,8 +1,8 @@
 from django.urls import include, path
 
-from .routers import *
+from users.routers import router
 
 
 urlpatterns = [
-    path("api/v1/", include(users_router.urls))
+    path("", include(router.urls))
 ]

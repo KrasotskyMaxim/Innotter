@@ -1,28 +1,39 @@
-from django.shortcuts import render
+from rest_framework.viewsets import GenericViewSet
+from rest_framework import mixins
 
-from rest_framework import viewsets
-
-from .models import *
-from .serializers import *
+from mainapp.models import Page, Post, Tag
+from mainapp.serializers import PageSerializer, PostSerializer, TagSerializer
 
 
-class PageViewSet(viewsets.ModelViewSet):
+class PageViewSet(mixins.CreateModelMixin,
+                  mixins.RetrieveModelMixin,
+                  mixins.UpdateModelMixin,
+                  mixins.DestroyModelMixin,
+                  mixins.ListModelMixin,
+                  GenericViewSet):
     serializer_class = PageSerializer
     
-    def get_queryset(self):
-        return Page.objects.all()
+    queryset = Page.objects.all()
+    
 
-
-class PostViewSet(viewsets.ModelViewSet):
+class PostViewSet(mixins.CreateModelMixin,
+                  mixins.RetrieveModelMixin,
+                  mixins.UpdateModelMixin,
+                  mixins.DestroyModelMixin,
+                  mixins.ListModelMixin,
+                  GenericViewSet):
     serializer_class = PostSerializer
     
-    def get_queryset(self):
-        return Post.objects.all()
+    queryset = Post.objects.all()
     
     
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(mixins.CreateModelMixin,
+                  mixins.RetrieveModelMixin,
+                  mixins.UpdateModelMixin,
+                  mixins.DestroyModelMixin,
+                  mixins.ListModelMixin,
+                  GenericViewSet):
     serializer_class = TagSerializer
     
-    def get_queryset(self):
-        return Tag.objects.all()
+    queryset = Tag.objects.all()
     
