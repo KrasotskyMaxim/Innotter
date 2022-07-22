@@ -23,6 +23,7 @@ class Page(models.Model):
     follow_requests = models.ManyToManyField('users.User', related_name='requests')
 
     unblock_date = models.DateTimeField(null=True, blank=True)
+    is_blocked = models.BooleanField(default=False)
     
     def __str__(self):
         return self.name
@@ -32,7 +33,7 @@ class Post(models.Model):
     page = models.ForeignKey(Page, on_delete=models.CASCADE, related_name='posts')
     content = models.CharField(max_length=180)
 
-    reply_to = models.ForeignKey('Post', on_delete=models.SET_NULL, null=True, related_name='replies')
+    reply_to = models.ForeignKey('Post', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
