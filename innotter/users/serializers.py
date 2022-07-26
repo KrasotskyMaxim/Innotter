@@ -41,15 +41,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return make_password(value)
 
 
-class UserLoginSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True)
-    password = serializers.CharField(required=True)  
-    access = serializers.CharField(read_only=True)
-    refresh = serializers.CharField(read_only=True)
-    
-    class Meta:
-        model = User 
-        fields = ("email", "password", "access", "refresh")
+class UserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True, write_only=True)
+    password = serializers.CharField(required=True, write_only=True)  
+    access = serializers.CharField(required=False)
+    refresh = serializers.CharField(required=False)
     
     def validate(self, attrs):
         validated_data = super().validate(attrs)
@@ -67,24 +63,14 @@ class UserLoginSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         jwt_token_dict = create_jwt_token_dict(to_refresh=False, validated_data=validated_data)
-        print(validated_data)
-        # print(jwt_token_dict)
-        return {
-            "email": jwt_token_dict.get("access"), 
-            "password": jwt_token_dict.get("refresh"), 
-            # "token": jwt_token_dict.get("access")
-        }
-        # return jwt_token_dict
-    
+        
+        return jwt_token_dict
+        
 
-class UserRefreshSerializer(serializers.ModelSerializer):
-    refresh_token = serializers.CharField(required=True)
-    access = serializers.CharField(read_only=True)
-    refresh = serializers.CharField(read_only=True)
-    
-    class Meta:
-        model = User 
-        fields = ("refresh_token", "access", "refresh")
+class UserRefreshSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField(required=True, write_only=True)
+    access = serializers.CharField(required=False)
+    refresh = serializers.CharField(required=False)
     
     def validate(self, attrs):
         validated_data = super().validate(attrs)
@@ -94,7 +80,7 @@ class UserRefreshSerializer(serializers.ModelSerializer):
             if payload.get("token_type") != "refresh":
                 raise serializers.ValidationError("Token isn't refresh!")
             validated_data["payload"] = payload
-        except jwt.ExpiredSignatureError:
+        except jwt.ExpiredSignatureError: 
             raise serializers.ValidationError("Refresh token is expired!")
         except jwt.InvalidTokenError:
             raise serializers.ValidationError("Refresh token isn't valid!")

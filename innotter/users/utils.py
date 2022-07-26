@@ -25,9 +25,9 @@ def generate_jwt_token(is_access: bool, to_refresh: bool, validated_data) -> str
 def create_payload(is_access: bool, to_refresh: bool, validated_data) -> dict:
     payload = {
         "iss": "backend-api",
-        "id": validated_data["payload"]["user_id"] if to_refresh else validated_data["user"].id,
+        "user_id": validated_data["payload"]["user_id"] if to_refresh else validated_data["user"].id,
         "exp": datetime.utcnow() + timedelta(minutes=JWT_ACCESS_TTL if is_access else JWT_REFRESH_TTL),
-        "type": "access" if is_access else "refresh"
+        "token_type": "access" if is_access else "refresh"
     }
     
     return payload
