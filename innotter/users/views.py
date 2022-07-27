@@ -2,8 +2,8 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework import mixins
 
 from users.models import User
-from users.serializers import UserListSerializer, UserDetailSerializer, UserRegistrationSerializer, UserLoginSerializer
-from rest_framework.permissions import IsAuthenticated
+from users.serializers import UserListSerializer, UserDetailSerializer, UserRegistrationSerializer, \
+    UserLoginSerializer, UserRefreshSerializer
 
 
 class UserViewSet(mixins.RetrieveModelMixin,
@@ -11,7 +11,7 @@ class UserViewSet(mixins.RetrieveModelMixin,
                   mixins.ListModelMixin,
                   GenericViewSet):
     queryset = User.objects.all()
-    # permission_classes = (IsAuthenticated, )
+    
     
     def get_serializer_class(self):
         if self.action in ["retrieve", "update"]:
@@ -26,9 +26,14 @@ class UserRegistrationViewSet(mixins.CreateModelMixin,
     serializer_class = UserRegistrationSerializer
     
     
-
 class UserLoginViewSet(mixins.CreateModelMixin,
                        GenericViewSet):
     queryset = User.objects.all()
     serializer_class = UserLoginSerializer
+    
+
+class RefreshLoginViewSet(mixins.CreateModelMixin,
+                          GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserRefreshSerializer
     
