@@ -34,6 +34,7 @@ class Post(models.Model):
     content = models.CharField(max_length=180)
 
     reply_to = models.ForeignKey('Post', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
+    likers = models.ManyToManyField("users.User", related_name="likers", blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
