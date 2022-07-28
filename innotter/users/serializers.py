@@ -16,6 +16,7 @@ class UserListSerializer(serializers.ModelSerializer):
         model = User
         fields = ("id", "username", "title", "email", "role", "image_s3_path", "is_blocked")
 
+
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -24,7 +25,6 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
     is_blocked = serializers.BooleanField()
         
-
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:

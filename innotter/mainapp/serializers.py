@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from mainapp.models import Page, Post, Tag
+from users.models import User 
 
 
 class PageListSerializer(serializers.ModelSerializer):
@@ -59,6 +60,25 @@ class ModeratorPageDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "name", "uuid", "description", "tags", "owner", "image_s3_path", "followers", "is_private", "is_blocked")
 
 
+class FollowerListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+            "title",
+            "email",
+        )
+
+
+class FollowerSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True)
+
+    class Meta:
+        model = User
+        fields = ("email",)
+
+
 class PostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
@@ -86,3 +106,12 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ("id", "name")
+        
+
+class ActionTagSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=30, required=True)
+
+    class Meta:
+        model = Tag
+        fields = ("name",)
+        

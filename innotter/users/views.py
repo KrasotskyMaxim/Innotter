@@ -6,6 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from users.models import User
 from users.serializers import UserListSerializer, UserDetailSerializer, UserRegistrationSerializer, \
     UserLoginSerializer, UserRefreshSerializer
+from users.permissions import IsAdmin
 
 
 class UserViewSet(mixins.RetrieveModelMixin,
@@ -13,7 +14,7 @@ class UserViewSet(mixins.RetrieveModelMixin,
                   mixins.ListModelMixin,
                   GenericViewSet):
     queryset = User.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
     
     def get_serializer_class(self):
         if self.action in ["retrieve", "update"]:

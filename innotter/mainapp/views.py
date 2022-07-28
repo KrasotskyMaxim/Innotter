@@ -5,9 +5,23 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from mainapp.models import Page, Post, Tag
-from mainapp.serializers import PageDetailSerializer, PageListSerializer, PostDetailSerializer, \
-    PostListSerializer, TagSerializer, UserPageDetailSerializer
-from mainapp.utils import get_active_pages, get_blocked_pages, get_posts
+from mainapp.serializers import (AdminPageDetailSerializer, 
+                                 PageDetailSerializer, 
+                                 PageListSerializer, 
+                                 PostDetailSerializer,
+                                 PostListSerializer, 
+                                 TagSerializer, 
+                                 UserPageDetailSerializer, 
+                                 FollowerListSerializer,
+                                 FollowerSerializer,
+                                 AdminPageDetailSerializer,
+                                 ModeratorPageDetailSerializer,
+                                 ActionTagSerializer)
+from mainapp.utils import (get_active_pages, 
+                           get_blocked_pages, 
+                           get_posts,
+                           get_permission_list)
+from users.permissions import IsAdmin, IsModerator, IsUser
 
 
 class PageViewSet(mixins.CreateModelMixin,
@@ -16,7 +30,29 @@ class PageViewSet(mixins.CreateModelMixin,
                   mixins.DestroyModelMixin,
                   mixins.ListModelMixin,
                   GenericViewSet):
-    permission_classes = (IsAuthenticated,)
+    
+    action_permission_classes = {
+        "list": (IsAuthenticated,),
+        "retrieve": (IsAuthenticated,),
+        "update": (IsAuthenticated, IsAdmin, IsModerator),
+        "partial_update": (IsAuthenticated, IsAdmin, IsModerator),
+        "blocked": (IsAuthenticated, IsAdmin, IsModerator),
+        "followers": (IsAuthenticated,),
+        "follow": (IsAuthenticated,),
+        "unfollow": (IsAuthenticated,),
+    }
+
+    list_serializer_classes = {
+        "list": PageListSerializer,
+        "blocked": PageListSerializer,
+        "followers": FollowerListSerializer,
+    }
+
+    detail_serializer_classes = {
+        "admin": AdminPageDetailSerializer,
+        "moderator": ModeratorPageDetailSerializer,
+        "user": PageDetailSerializer,
+    }
     
     @action(detail=False, methods=["get"], url_path="blocked")
     def blocked(self, request):
@@ -36,6 +72,9 @@ class PageViewSet(mixins.CreateModelMixin,
         
         return PageListSerializer
     
+    def get_permissions(self):
+        return get_permission_list(self, permission_dict=self.action_permission_classes)
+    
 
 class OwnerPageViewSet(mixins.CreateModelMixin,
                        mixins.RetrieveModelMixin,
@@ -44,6 +83,19 @@ class OwnerPageViewSet(mixins.CreateModelMixin,
                        mixins.ListModelMixin,
                        GenericViewSet):
     permission_classes = (IsAuthenticated,)
+    
+    serializer_classes = {
+        "list": PageListSerializer,
+        "create": PageListSerializer,
+        "page_follow_requests": FollowerListSerializer,
+        "all_follow_requests": FollowerListSerializer,
+        "followers": FollowerListSerializer,
+        "deny_follow_request": FollowerSerializer,
+        "accept_follow_request": FollowerSerializer,
+        "tags": TagSerializer,
+        "add_tag_to_page": ActionTagSerializer,
+        "remove_tag_from_page": ActionTagSerializer,
+    }
     
     def get_queryset(self):
         return Page.objects.filter(owner=self.request.user)
@@ -62,13 +114,7 @@ class PostViewSet(mixins.CreateModelMixin,
                   mixins.ListModelMixin,
                   GenericViewSet):
     queryset = Post.objects.all().order_by("id")
-    permission_classes = (IsAuthenticated,)
-    
-    def get_serializer_class(self):
-        if self.action in ("retrieve", "update"):
-            return PostDetailSerializer
-        
-        return PostListSerializer
+    permission_classes = (IsAuthenticated, IsAdmin, IsModerator)
     
 
 class OwnerPostViewSet(mixins.CreateModelMixin,
@@ -98,4 +144,13 @@ class TagViewSet(mixins.CreateModelMixin,
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (IsAuthenticated,)
+    
+    action_permission_classes = {
+        "list": (IsAuthenticated,),
+        "create": (IsAuthenticated,),
+        "destroy": (IsAuthenticated, IsAdmin, IsModerator),
+    }
+
+    def get_permissions(self):
+        return get_permission_list(self, permission_dict=self.action_permission_classes)
     
