@@ -140,7 +140,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 JWT_SECRET = os.getenv('JWT_SECRET')
-JWT_ACCESS_TTL = 5 
+JWT_ACCESS_TTL = 5 * 24
 JWT_REFRESH_TTL = 60 * 24
 
 REST_FRAMEWORK = {

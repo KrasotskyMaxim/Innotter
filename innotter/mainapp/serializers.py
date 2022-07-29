@@ -32,7 +32,7 @@ class UserPageDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Page
-        fields = ("id", "name", "uuid", "description", "tags", "owner", "image_s3_path", "followers", "is_private", "follow_requests")
+        fields = ("id", "name", "uuid", "description", "tags", "owner", "followers", "is_private", "follow_requests")
         read_only_fields = ("followers", "follow_requests")
 
 
@@ -44,8 +44,8 @@ class AdminPageDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Page
-        fields = ("id", "name", "uuid", "description", "tags", "owner", "image_s3_path", "followers", "is_private", "unblock_date", "is_blocked")
-        read_only_fields = ("id", "name", "uuid", "description", "tags", "owner", "image_s3_path", "followers", "is_private")
+        fields = ("id", "name", "uuid", "description", "tags", "owner", "followers", "is_private", "unblock_date", "is_blocked")
+        read_only_fields = ("id", "name", "uuid", "description", "tags", "owner", "followers", "is_private")
 
 
 class ModeratorPageDetailSerializer(serializers.ModelSerializer):
@@ -56,24 +56,19 @@ class ModeratorPageDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Page
-        fields = ("id", "name", "uuid", "description", "tags", "owner", "image_s3_path", "followers", "is_private", "unblock_date", "is_blocked")
-        read_only_fields = ("id", "name", "uuid", "description", "tags", "owner", "image_s3_path", "followers", "is_private", "is_blocked")
+        fields = ("id", "name", "uuid", "description", "tags", "owner", "followers", "is_private", "unblock_date", "is_blocked")
+        read_only_fields = ("id", "name", "uuid", "description", "tags", "owner", "followers", "is_private", "is_blocked")
 
 
 class FollowerListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = (
-            "id",
-            "username",
-            "title",
-            "email",
-        )
+        fields = ("id", "username", "title", "email")
 
 
 class FollowerSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
-
+    
     class Meta:
         model = User
         fields = ("email",)

@@ -4,9 +4,13 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from users.models import User
-from users.serializers import UserListSerializer, UserDetailSerializer, UserRegistrationSerializer, \
-    UserLoginSerializer, UserRefreshSerializer
+from users.serializers import (UserListSerializer, 
+                               UserDetailSerializer, 
+                               UserRegistrationSerializer,
+                               UserLoginSerializer, 
+                               UserRefreshSerializer)
 from users.permissions import IsAdmin
+from users.utils import block_or_unblock_owner_pages, access_to_admin_panel
 
 
 class UserViewSet(mixins.RetrieveModelMixin,
@@ -16,6 +20,22 @@ class UserViewSet(mixins.RetrieveModelMixin,
     queryset = User.objects.all()
     permission_classes = (IsAuthenticated, IsAdmin)
     
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        if "is_blocked" in request.data:
+            block_or_unblock_owner_pages(user=instance)
+        
+        if "role" in request.data:
+            access_to_admin_panel(user=instance)
+            
+        return Response(serializer.data) 
+    
+        
     def get_serializer_class(self):
         if self.action in ["retrieve", "update"]:
             return UserDetailSerializer
