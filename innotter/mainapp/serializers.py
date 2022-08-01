@@ -97,6 +97,16 @@ class PostDetailSerializer(serializers.ModelSerializer):
         return post.reply_to.content if post.reply_to else None
 
 
+class PostFeedSerializer(serializers.ModelSerializer):
+    page = serializers.SlugRelatedField(slug_field="name", read_only=True)
+    reply_to = serializers.SlugRelatedField(slug_field="content", read_only=True)
+    created_at = serializers.DateTimeField(format="%d-%m-%Y %H:%M")
+
+    class Meta:
+        model = Post
+        fields = ("id", "page", "content", "reply_to", "created_at")
+
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag

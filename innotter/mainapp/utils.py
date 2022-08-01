@@ -30,11 +30,10 @@ def get_page_followers(page_pk: int, with_blocked: bool = False) -> Page:
     page = get_object_or_404(Page, pk=page_pk)
     
     if with_blocked:
-        page_followers = page.followers.all().order_by("id")
+        return page.followers.all().order_by("id")
     else:
-        page_followers = page.followers.filter(is_blocked=False).order_by("id")
+        return page.followers.filter(is_blocked=False).order_by("id")
     
-    return page_followers
 
 def get_page_follow_requests(page_pk: int) -> Page:
     page = get_object_or_404(Page, pk=page_pk)
@@ -126,9 +125,9 @@ def get_posts(is_owner_posts: bool, owner=None) -> Post:
 
 def get_follow_posts(user: User) -> Post:
     pages = Page.objects.filter(Q(followers=user) | Q(owner=user)).distinct()
-    posts = Post.objects.filter(page__in=pages).order_by("-created_at")
     
-    return posts 
+    return Post.objects.filter(page__in=pages).order_by("-created_at")
+
     
 def get_liked_posts(user: User) -> Post:
     return Post.objects.filter(likers=user).order_by("created_at")
@@ -157,9 +156,9 @@ def unlike_post(user: User, post_pk: int) -> bool:
 
 def get_page_tags(page_pk: int) -> Tag:
     page = get_object_or_404(Page, pk=page_pk)
-    tags = page.tags.all()
     
-    return tags 
+    return page.tags.all() 
+
 
 def add_tag(tag_name: str, page_pk: int) -> bool:
     page = get_object_or_404(Page, pk=page_pk)
