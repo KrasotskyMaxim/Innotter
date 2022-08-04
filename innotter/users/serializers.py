@@ -7,14 +7,17 @@ import django.contrib.auth.password_validation as validators
 from django.contrib.auth.hashers import make_password
 
 from users.models import User
-from innotter.settings import JWT_SECRET
-from users.utils import create_jwt_token_dict
+from users.utils import create_jwt_token_dict, get_presigned_url
+
+from innotter.aws import s3 
+from innotter.settings import JWT_SECRET, AWS 
 
     
 class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("id", "username", "title", "email", "role", "image_s3_path", "is_blocked")
+
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -25,6 +28,24 @@ class UserDetailSerializer(serializers.ModelSerializer):
     is_blocked = serializers.BooleanField()
         
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField("get_avatar_url")
+
+    class Meta:
+        model = User
+        fields = ("id", "email", "avatar_url", "role", "title", "is_blocked")
+
+    def get_avatar_url(self, obj):
+        s3_key = obj.het("image_s3_path")
+        url = get_presigned_url(key=s3_key)
+        
+        return url
+        
+
+class UserUpdateAvatarSerializer(serializers.Serializer):
+    img = serializers.FileField()
+
+        
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -66,7 +87,7 @@ class UserLoginSerializer(serializers.Serializer):
         
         return jwt_token_dict
         
-
+        
 class UserRefreshSerializer(serializers.Serializer):
     refresh_token = serializers.CharField(required=True, write_only=True)
     access = serializers.CharField(required=False)

@@ -19,4 +19,5 @@ RUN pip install -r requirements.txt
 COPY . /app/
 
 # run entrypoint.sh
-ENTRYPOINT ["./entrypoint.sh"]
+RUN chmod +x ./entrypoint.sh
+RUN chmod +x ./entrypoint_celery.sh
