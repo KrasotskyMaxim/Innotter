@@ -4,9 +4,8 @@ from rest_framework import status
 
 import jwt
 
-from innotter.settings import JWT_SECRET, JWT_ACCESS_TTL, JWT_REFRESH_TTL
+from innotter.settings import JWT_SECRET, JWT_ACCESS_TTL, JWT_REFRESH_TTL, AWS, IMAGE_EXTS
 from innotter.aws import s3
-from innotter.settings import AWS
  
 from mainapp.models import Page
 from users.models import User 
@@ -61,41 +60,56 @@ def access_to_admin_panel(user: User) -> bool:
         return False
     
 
+def get_presigned_url(key: str) -> str:
+    
+    exp_time = 60 * 60 * 24 * 7
+    
+    url = s3.generate_presigned_url(
+        "get_object",
+        Params={
+            "Bucket": AWS.get("AWS_BUCKET_NAME"),
+            "Key": key
+        },
+        ExpiresIn=exp_time
+    )
+    
+    return url
+
+
+def put_file_in_bucket(key: str, file) -> None:
+    s3.put_object(
+        Bucket=AWS.get("AWS_BUCKET_NAME"),
+        Key=key,
+        Body=file
+    )
+
+def create_s3_key(file: str, user: User, file_ext: str) -> str:
+    timestamp = int(datetime.now().timestamp())
+    s3_key = file.name + "_" +str(user.pk)+str(timestamp)+"."+file_ext
+    
+    return s3_key 
+    
+
 def update_user_avatar(request, pk):
-    IMAGE_EXTS = ("png", "jpg", "jpeg", "gif")
     user = request.user
+    
     if int(user.pk) != int(pk):
         return {"Error": "Wrong user id."}, status.HTTP_400_BAD_REQUEST    
 
     file = request.FILES["img"]
     file_ext = file.name.split(".")[-1]
+    
     if not file_ext in IMAGE_EXTS:
         return {"Error": f"Invalid file extension .{file_ext} ."}, status.HTTP_400_BAD_REQUEST 
 
-    timestamp = int(datetime.now().timestamp())
-    s3_key = file.name + "_" +str(user.pk)+str(timestamp)+"."+file_ext
-
-    s3.put_object(
-        Bucket=AWS["AWS_BUCKET_NAME"],
-        Key=s3_key,
-        Body=file
-    )
-
-    s3_image_path = f"s3://{AWS['AWS_BUCKET_NAME']}/{s3_key}"
-
+    s3_key = create_s3_key(file=file, user=user, file_ext=file_ext)
+    put_file_in_bucket(key=s3_key, file=file)
+    
     user.image_s3_path = s3_key
     user.save()
     
-    exp_time = 60 * 60 * 24 * 7
-    url = s3.generate_presigned_url(
-        "get_object",
-        Params={
-            "Bucket": AWS["AWS_BUCKET_NAME"],
-            "Key": s3_key
-        },
-        ExpiresIn=exp_time
-    )
-
-    return {"avatar_url": url}, status.HTTP_200_OK
+    presigned_url = get_presigned_url(key=s3_key)
+    
+    return {"avatar_url": presigned_url}, status.HTTP_200_OK
  
         

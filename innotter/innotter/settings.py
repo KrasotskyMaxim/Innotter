@@ -154,8 +154,10 @@ AWS = {
     "AWS_SES_REGION_NAME": os.getenv("AWS_DEFAULT_REGION_"),
 }
 
+IMAGE_EXTS = ("png", "jpg", "jpeg", "gif")
+
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
-CELERY_BROKER_URL = "amqp://localhost"
+CELERY_BROKER_URL = "amqp://localhost:7000"
 CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 3600}
 CELERY_ACCEPT_CONTENT = ("application/json",)
 CELERY_TASK_SERIALIZER = "json"

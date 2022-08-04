@@ -61,15 +61,13 @@ class UserProfileViewSet(mixins.RetrieveModelMixin,
     @action(detail=True, methods=["put"])
     def set_avatar(self, request, pk):
         serializer = self.get_serializer_class()(data=request.data)
+        
         if not serializer.is_valid():
             return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
 
         data, stat = update_user_avatar(request, pk)
-        return Response(
-            data=data,
-            status=stat
-        )
-    
+        
+        return Response(data=data, status=stat)
     
 
 class UserRegistrationViewSet(mixins.CreateModelMixin,

@@ -7,7 +7,7 @@ import django.contrib.auth.password_validation as validators
 from django.contrib.auth.hashers import make_password
 
 from users.models import User
-from users.utils import create_jwt_token_dict
+from users.utils import create_jwt_token_dict, get_presigned_url
 
 from innotter.aws import s3 
 from innotter.settings import JWT_SECRET, AWS 
@@ -36,16 +36,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ("id", "email", "avatar_url", "role", "title", "is_blocked")
 
     def get_avatar_url(self, obj):
-        s3_key = obj["image_s3_path"]
-        exp_time = 60 * 60 * 24 * 7
-        url = s3.generate_presigned_url(
-            "get_object",
-            Params={
-                "Bucket": AWS["AWS_BUCKET_NAME"],
-                "Key": s3_key
-            },
-            ExpiresIn=exp_time
-        )
+        s3_key = obj.het("image_s3_path")
+        url = get_presigned_url(key=s3_key)
+        
         return url
         
 
