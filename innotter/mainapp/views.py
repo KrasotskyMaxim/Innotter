@@ -36,8 +36,10 @@ from mainapp.utils import (get_active_pages,
                            like_post,
                            unlike_post,
                            get_liked_posts,
-                           get_follow_posts)
-from users.permissions import IsAdmin, IsModerator, IsUser, IsBlockedUser
+                           get_follow_posts,
+                           get_send_email_data)
+from users.permissions import IsAdmin, IsModerator, IsUser, IsNotBlockedUser
+from mainapp.tasks import send_email_to_subscribers
 
 
 class PageViewSet(mixins.CreateModelMixin,
@@ -48,14 +50,14 @@ class PageViewSet(mixins.CreateModelMixin,
                   GenericViewSet):
     
     action_permission_classes = {
-        "list": (IsAuthenticated, ~IsBlockedUser),
-        "retrieve": (IsAuthenticated, ~IsBlockedUser),
+        "list": (IsAuthenticated, IsNotBlockedUser),
+        "retrieve": (IsAuthenticated, IsNotBlockedUser),
         "update": (IsAuthenticated, IsAdmin | IsModerator),
         "partial_update": (IsAuthenticated, IsAdmin | IsModerator),
         "blocked": (IsAuthenticated, IsAdmin | IsModerator),
-        "followers": (IsAuthenticated, ~IsBlockedUser),
-        "follow": (IsAuthenticated, ~IsBlockedUser),
-        "unfollow": (IsAuthenticated, ~IsBlockedUser),
+        "followers": (IsAuthenticated, IsNotBlockedUser),
+        "follow": (IsAuthenticated, IsNotBlockedUser),
+        "unfollow": (IsAuthenticated, IsNotBlockedUser),
     }
 
     detail_serializer_classes = {
@@ -120,7 +122,7 @@ class OwnerPageViewSet(mixins.CreateModelMixin,
                        mixins.DestroyModelMixin,
                        mixins.ListModelMixin,
                        GenericViewSet):
-    permission_classes = (IsAuthenticated, ~IsBlockedUser)
+    permission_classes = (IsAuthenticated, IsNotBlockedUser)
     
     serializer_classes = {
         "list": PageListSerializer,
@@ -230,7 +232,7 @@ class PostViewSet(mixins.CreateModelMixin,
                   mixins.ListModelMixin,
                   GenericViewSet):
     queryset = Post.objects.all().order_by("id")
-    permission_classes = (IsAuthenticated, IsAdmin | IsModerator, ~IsBlockedUser)
+    permission_classes = (IsAuthenticated, IsAdmin | IsModerator, IsNotBlockedUser)
     serializer_class = PostListSerializer
     
 
@@ -240,7 +242,7 @@ class OwnerPostViewSet(mixins.CreateModelMixin,
                        mixins.DestroyModelMixin,
                        mixins.ListModelMixin,
                        GenericViewSet):
-    permission_classes = (IsAuthenticated, ~IsBlockedUser)
+    permission_classes = (IsAuthenticated, IsNotBlockedUser)
 
     def get_queryset(self):
         return get_posts(is_owner_posts=True, owner=self.request.user)
@@ -251,12 +253,17 @@ class OwnerPostViewSet(mixins.CreateModelMixin,
         
         return PostListSerializer
     
+    def perform_create(self, serializer):
+        serializer.save()
+        page_name, follower_emails = get_send_email_data(page_pk=self.request.data["page"][0])
+        send_email_to_subscribers.delay(page=page_name, follower_list=follower_emails)
+    
     
 class PostFeedViewSet(mixins.RetrieveModelMixin, 
                       mixins.ListModelMixin, 
                       GenericViewSet):
     serializer_class = PostFeedSerializer
-    permission_classes = (IsAuthenticated, ~IsBlockedUser)
+    permission_classes = (IsAuthenticated, IsNotBlockedUser)
 
     @action(detail=True, methods=["post"], url_path="like")
     def like(self, request, pk=None):
@@ -291,12 +298,12 @@ class TagViewSet(mixins.CreateModelMixin,
                  GenericViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (IsAuthenticated, ~IsBlockedUser)
+    permission_classes = (IsAuthenticated, IsNotBlockedUser)
     
     action_permission_classes = {
-        "list": (IsAuthenticated, ~IsBlockedUser),
-        "create": (IsAuthenticated, ~IsBlockedUser),
-        "destroy": (IsAuthenticated, IsAdmin | IsModerator, ~IsBlockedUser),
+        "list": (IsAuthenticated, IsNotBlockedUser),
+        "create": (IsAuthenticated, IsNotBlockedUser),
+        "destroy": (IsAuthenticated, IsAdmin | IsModerator, IsNotBlockedUser),
     }
 
     def get_permissions(self):

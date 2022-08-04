@@ -181,3 +181,9 @@ def remove_tag(tag_name: str, page_pk: int) -> bool:
     page.tags.remove(tag)
     
     return True 
+
+def get_send_email_data(page_pk: int):
+    page = get_object_or_404(Page, pk=page_pk)
+    page_followers = page.followers.filter(is_blocked=False)
+    
+    return page.name, [follower.email for follower in page_followers]

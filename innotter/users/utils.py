@@ -1,8 +1,13 @@
 from datetime import datetime, timedelta
 
+from rest_framework import status
+
 import jwt
 
 from innotter.settings import JWT_SECRET, JWT_ACCESS_TTL, JWT_REFRESH_TTL
+from innotter.aws import s3
+from innotter.settings import AWS
+ 
 from mainapp.models import Page
 from users.models import User 
 
@@ -53,5 +58,44 @@ def access_to_admin_panel(user: User) -> bool:
         user.is_staff = False
         user.is_superuser = False
         user.save()
-        return False 
+        return False
+    
+
+def update_user_avatar(request, pk):
+    IMAGE_EXTS = ("png", "jpg", "jpeg", "gif")
+    user = request.user
+    if int(user.pk) != int(pk):
+        return {"Error": "Wrong user id."}, status.HTTP_400_BAD_REQUEST    
+
+    file = request.FILES["img"]
+    file_ext = file.name.split(".")[-1]
+    if not file_ext in IMAGE_EXTS:
+        return {"Error": f"Invalid file extension .{file_ext} ."}, status.HTTP_400_BAD_REQUEST 
+
+    timestamp = int(datetime.now().timestamp())
+    s3_key = file.name + "_" +str(user.pk)+str(timestamp)+"."+file_ext
+
+    s3.put_object(
+        Bucket=AWS["AWS_BUCKET_NAME"],
+        Key=s3_key,
+        Body=file
+    )
+
+    s3_image_path = f"s3://{AWS['AWS_BUCKET_NAME']}/{s3_key}"
+
+    user.image_s3_path = s3_key
+    user.save()
+    
+    exp_time = 60 * 60 * 24 * 7
+    url = s3.generate_presigned_url(
+        "get_object",
+        Params={
+            "Bucket": AWS["AWS_BUCKET_NAME"],
+            "Key": s3_key
+        },
+        ExpiresIn=exp_time
+    )
+
+    return {"avatar_url": url}, status.HTTP_200_OK
+ 
         

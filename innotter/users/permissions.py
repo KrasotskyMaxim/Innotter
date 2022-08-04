@@ -26,10 +26,10 @@ class IsUser(permissions.BasePermission):
         return request.user.role == User.Roles.USER
     
 
-class IsBlockedUser(permissions.BasePermission):
+class IsNotBlockedUser(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        return request.user.is_blocked
+        return not request.user.is_blocked
 
     def has_permission(self, request, view):
-        return request.user.is_blocked
+        return not request.user.is_blocked
     
