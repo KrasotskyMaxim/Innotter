@@ -1,0 +1,27 @@
+{
+    "TableName": "Pages",
+    "AttributeDefinitions": [
+        {
+            "AttributeName": "userid",
+            "AttributeType": "S"
+        },
+        {
+            "AttributeName": "page_name",
+            "AttributeType": "S"
+        }
+    ],
+    "ProvisionedThroughput": {
+        "WriteCapacityUnits": 5,
+        "ReadCapacityUnits": 5
+    },
+    "KeySchema": [
+        {
+            "AttributeName": "userid",
+            "KeyType": "HASH"
+        },
+        {
+            "AttributeName": "page_name",
+            "KeyType": "Range"
+        }
+    ]
+} 

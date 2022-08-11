@@ -1,31 +1,33 @@
-import json, os
+import json
 import pika
 
-from dotenv import load_dotenv
+from settings import (RABBITMQ_PASS, 
+                      RABBITMQ_HOST,
+                      RABBITMQ_PORT,
+                      RABBITMQ_USER)
 
 
-load_dotenv()
+def callback(ch, method, properties, body):
+        data = json.loads(body)
+        print(method, properties, data)
 
-RABBITMQ_USER = os.getenv("RABBITMQ_USER")
-RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
-RABBITMQ_PORT = os.getenv("RABBITMQ_PORT")
-RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
+
+def start_consuming(channel):
+    channel.queue_declare(queue="statistic")
+    channel.basic_consume(queue="statistic", on_message_callback=callback, auto_ack=True)
+    channel.start_consuming()
 
 
 def main():
     credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
+    
     connection = pika.BlockingConnection(pika.ConnectionParameters(
         host=RABBITMQ_HOST, credentials=credentials, heartbeat=600, blocked_connection_timeout=300))
+    
     channel = connection.channel()
-    channel.queue_declare(queue="statistic")
-
-    def callback(ch, method, properties, body):
-        data = json.loads(body)
-        print(method, properties, data)
-
-    channel.basic_consume(queue="statistic", on_message_callback=callback, auto_ack=True)
-    channel.start_consuming()
-
+    
+    start_consuming(channel=channel)    
+    
 
 if __name__ == "__main__":
     main() 

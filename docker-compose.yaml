@@ -51,11 +51,14 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
-    
+      SERVICES: dynamodb
     ports:
       - "4566:4566"
     volumes:
       - './setup_localstack.sh:/docker-entrypoint-initaws.d/make-s3.sh'
+      - './stat/app/tabledef.json:/tabledef.json'
+      - "${TMPDIR:-/var/lib/localstack}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
       
   stat_service:
     build: ./stat/app
