@@ -1,6 +1,17 @@
+from enum import Enum
 import boto3
 
+from fastapi import HTTPException, status 
+
 from settings import AWS_CREDENTIALS
+
+
+class DynamoDBFields(str, Enum):
+    ITEM = "Item"
+    ITEMS = "Items"
+    ATTRS = "Attributes"
+    ALL_NEW = "ALL_NEW"
+
 
 
 def init_db():
@@ -56,3 +67,11 @@ def init_db():
     
     return db
 
+def check_page_exists(page):
+    if not DynamoDBFields.ITEM in page:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Undefined page." 
+        )
+    
+    return True 
