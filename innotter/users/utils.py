@@ -73,7 +73,10 @@ def get_presigned_url(key: str) -> str:
         ExpiresIn=exp_time
     )
     
+    url = url.replace("stack", "host")
+    
     return url
+    
 
 
 def put_file_in_bucket(key: str, file) -> None:
