@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 
@@ -16,3 +17,5 @@ RABBITMQ_USER = os.getenv("RABBITMQ_USER")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
 RABBITMQ_PORT = os.getenv("RABBITMQ_PORT")
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
+
+STAT_SERVICE_QUEUE = os.getenv("STAT_SERVICE_QUEUE")
