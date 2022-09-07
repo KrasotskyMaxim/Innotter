@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action 
 from rest_framework.response import Response
 
+from innotter.producer import publish
 from mainapp.models import Page, Post, Tag
 from mainapp.serializers import (AdminPageDetailSerializer, 
                                  PageDetailSerializer, 
@@ -37,7 +38,8 @@ from mainapp.utils import (get_active_pages,
                            unlike_post,
                            get_liked_posts,
                            get_follow_posts,
-                           get_send_email_data)
+                           get_send_email_data,
+                           get_pages_statistics)
 from users.permissions import IsAdmin, IsModerator, IsUser, IsNotBlockedUser
 from mainapp.tasks import send_email_to_subscribers
 
@@ -148,8 +150,7 @@ class OwnerPageViewSet(mixins.CreateModelMixin,
     def page_follow_requests(self, request, pk=None):
         follow_requests = get_page_follow_requests(page_pk=pk)
         serializer = FollowerListSerializer(follow_requests, many=True)
-        serializer.is_valid(raise_exception=True)
-        
+
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], url_path="accept-request")
@@ -217,6 +218,54 @@ class OwnerPageViewSet(mixins.CreateModelMixin,
             return Response({"detail": "Tag already removed!"}, status=status.HTTP_200_OK)
                 
         return Response({"detail": "You have successfully removed tag from page!"}, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=["get"], url_path="stat")
+    def stat(self, request):
+        data, status = get_pages_statistics(request)
+        
+        return Response(data=data, status=status) 
+    
+    def perform_update(self, serializer):
+        serializer.save()
+        
+        page_name = serializer.validated_data.get("name")
+        owner_id = self.request.user.pk 
+        page_id = Page.objects.get(name=page_name).id
+        
+        data = {
+            "id": str(page_id),
+            "user_id": str(owner_id), 
+            "name": str(page_name)
+        }
+        
+        publish("update_page", body=data)
+
+    
+    def perform_create(self, serializer):
+        serializer.save()
+        
+        page_name = serializer.validated_data.get("name")
+        owner_id = self.request.user.pk 
+        page_id = Page.objects.get(name=page_name).id
+        
+        data = {
+            "id": str(page_id),
+            "user_id": str(owner_id), 
+            "name": str(page_name)
+        }
+        
+        publish("create_page", body=data)
+
+    def perform_destroy(self, instance, **kwargs):
+        user_id = self.request.user.pk
+        
+        data = {
+            "user_id": str(user_id),
+            "id": str(instance.id)
+        }
+        
+        publish("delete_page", body=data)
+        instance.delete()
     
     def get_queryset(self):
         return get_active_pages(is_owner_page=True, owner=self.request.user)

@@ -1,3 +1,5 @@
+.dockerignore
+
 # Django #
 *.log
 *.pot

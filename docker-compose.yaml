@@ -13,21 +13,21 @@ services:
       - ./.env
   
   db:
-    image: postgres
+    image: postgres 
     restart: on-failure
     volumes:
       - ./data/db:/var/lib/postgresql/data/
     env_file:
       - ./.env
   
-  rabbit:
+  rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3-management
     restart: on-failure
     env_file:
       - ./.env
     ports:
-      - 7000:7000
+      - 5672:5672
       - 15672:15672
 
   celery:
@@ -42,7 +42,7 @@ services:
     ports:
       - "5555:5555"
     depends_on:
-      - rabbit
+      - rabbitmq
       
   localstack:
     image: localstack/localstack
@@ -51,10 +51,23 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
+      SERVICES: dynamodb
     ports:
       - "4566:4566"
     volumes:
       - './setup_localstack.sh:/docker-entrypoint-initaws.d/make-s3.sh'
+      
+  stat_service:
+    build: ./stat/app
+    command: sh ./entrypoint.sh
+    restart: on-failure
+    ports:
+      - "7000:7000"
+    depends_on:
+      - localstack
+      - rabbitmq
+    env_file:
+      - ./.env
 
 volumes:
   postgres_data:

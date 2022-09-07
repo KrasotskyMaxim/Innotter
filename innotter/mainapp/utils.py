@@ -1,8 +1,11 @@
+from rest_framework import status
+
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from mainapp.models import Page, Post, Tag 
+from innotter.producer import publish
 from users.models import User
 
 
@@ -44,20 +47,28 @@ def get_page_follow_requests(page_pk: int) -> Page:
 def follow_page(user: User, page_pk: int) -> bool:
     page = get_object_or_404(Page, pk=page_pk)
     
-    if page.followers.contains(user):
+    if page.follow_requests.contains(user) or page.followers.contains(user):
         return False 
     
-    page.followers.add(user)
+    page.follow_requests.add(user)
+    
+    publish("new_follow_request", {"id": str(page_pk)})
     
     return True
     
 
 def unfollow_page(user: User, page_pk: int) -> bool:
     page = get_object_or_404(Page, pk=page_pk)
-    if not page.followers.contains(user):
+    
+    if not page.follow_requests.contains(user) and not page.followers.contains(user):
         return False     
     
-    page.followers.remove(user)
+    if page.follow_requests.contains(user):
+        page.follow_requests.remove(user)
+        publish("undo_follow_request", {"id": str(page_pk)})
+    elif page.followers.contains(user):    
+        page.followers.remove(user)
+        publish("undo_follower", {"id": str(page_pk)})
     
     return True
 
@@ -72,6 +83,9 @@ def accept_request(follower_email: str, page_pk: int) -> bool:
     page.followers.add(follower)
     page.follow_requests.remove(follower)
     
+    publish("new_follower", {"id": str(page_pk)})
+    publish("undo_follow_request", {"id": str(page_pk)})
+    
     return True
 
 
@@ -83,6 +97,8 @@ def deny_request(follower_email: str, page_pk: int) -> bool:
         return False
     
     page.follow_requests.remove(follower)
+    
+    publish("undo_follow_request", {"id": str(page_pk)})
     
     return True
 
@@ -140,6 +156,8 @@ def like_post(user: User, post_pk: int) -> bool:
     
     post.likers.add(user)
     
+    publish("new_like", {"id": str(post.page.id)})
+    
     return True
     
     
@@ -150,6 +168,8 @@ def unlike_post(user: User, post_pk: int) -> bool:
         return False    
     
     post.likers.remove(user)
+    
+    publish("undo_like", {"id": str(post.page.id)})
     
     return True
     
@@ -187,3 +207,12 @@ def get_send_email_data(page_pk: int):
     page_followers = page.followers.filter(is_blocked=False)
     
     return page.name, [follower.email for follower in page_followers]
+
+
+def get_pages_statistics(request):
+    user = request.user
+    
+    response = publish("get_stat", {"user_id": str(user.id)})
+    
+    return response, status.HTTP_200_OK 
+    
